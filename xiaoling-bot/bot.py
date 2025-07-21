@@ -1,5 +1,5 @@
 BOT_TOKEN = ''
-CHANNEL_ID =
+CHANNEL_ID = 
 
 import discord
 
