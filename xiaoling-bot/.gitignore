@@ -1,2 +1,5 @@
 git rm -r --cached .venv
 .venv/
+*.txt
+keys.txt
+xiaoling-bot/keys.txt
