@@ -1,2 +1,2 @@
 # yuans-discord-bot
-discord boy in the works for my server
+discord bot in the works for my server
