@@ -19,11 +19,29 @@ with open('keys.txt', 'r') as file:
 
 #events
 
+
+#welcomes member upon joining
 @bot.event
 async def on_member_join(member):
     
+    #change to welcome channel ID
     channel = bot.get_channel(keys['CHANNEL_ID'])
-    await channel.send(f"Welcome {member.mention}!")
+    
+    
+    #embed
+    embed = discord.Embed(
+        title ="Welcome to the yuan's starspace!",
+        description=f"Hello {member.mention}, glad to have you here!",
+        color=ffffff
+        
+    )
+    
+    embed.set_thumbnail(url=member.avatar.url)
+    embed.add_field(name="Rules", value="Please check #rules!", inline=False)
+    embed.set_footer(text=f"Member #{len(member.guild.members)}")
+    
+    #sending embed to channel
+    await channel.send(embed=embed)
     
 
 
