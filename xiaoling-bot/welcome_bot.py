@@ -28,7 +28,7 @@ async def on_member_join(member):
     channel = bot.get_channel(keys['CHANNEL_ID'])
     
     
-    #embed
+    #embedS
     embed = discord.Embed(
         title ="Welcome to the yuan's starspace!",
         description=f"Hello {member.mention}, glad to have you here!",
@@ -36,7 +36,7 @@ async def on_member_join(member):
         
     )
     
-    embed.set_thumbnail(url=member.avatar.url)
+    embed.set_thumbnail(url="https://pbs.twimg.com/media/FsKbjMSaYAMAuuh.jpg")
     embed.add_field(name="Rules", value="Please check #rules!", inline=False)
     embed.set_footer(text=f"Member #{len(member.guild.members)}")
     
