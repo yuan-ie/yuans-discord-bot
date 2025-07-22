@@ -32,7 +32,7 @@ async def on_member_join(member):
     embed = discord.Embed(
         title ="Welcome to the yuan's starspace!",
         description=f"Hello {member.mention}, glad to have you here!",
-        color=ffffff
+        color=0x00ff00
         
     )
     
