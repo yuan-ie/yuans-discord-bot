@@ -17,7 +17,14 @@ with open('keys.txt', 'r') as file:
                 
 
 
+#events
 
+@bot.event
+async def on_member_join(member):
+    
+    channel = bot.get_channel(keys['CHANNEL_ID'])
+    await channel.send(f"Welcome {member.mention}!")
+    
 
 
 
