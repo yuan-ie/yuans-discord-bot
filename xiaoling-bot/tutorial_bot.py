@@ -25,9 +25,11 @@ class myModal(discord.ui.Modal):
         self.parent_view = parent_view
         self.message = message
 
+        is_secondary = self.title == "Secondary Message"
+
         # input title and description prompts
-        self.input_title = discord.ui.TextInput(label="Title", style=discord.TextStyle.short)
-        self.input_description = discord.ui.TextInput(label="Description", style=discord.TextStyle.paragraph)
+        self.input_title = discord.ui.TextInput(label="Title", style=discord.TextStyle.short, required=not is_secondary)
+        self.input_description = discord.ui.TextInput(label="Description", style=discord.TextStyle.paragraph, required=not is_secondary)
 
         # add to the popup
         self.add_item(self.input_title)
@@ -39,30 +41,38 @@ class myModal(discord.ui.Modal):
         title = self.input_title.value
         description = self.input_description.value
 
-        # store as the instance variables
+        # edit the main message
         if self.title == "Main Message":
             self.parent_view.embed.title=title
             self.parent_view.embed.description=description
-        elif self.title == "Secondary Message":
-            if len(self.parent_view.embed.fields) == 1:
-                self.parent_view.embed.set_field_at(0, name=title, value=description, inline=False)
-            else:
-                self.parent_view.embed.add_field(name=title, value=description)
-        await self.message.edit(embed=self.parent_view.embed)
+            await self.message.edit(embed=self.parent_view.embed)
 
-        # embed = self.parent_view.create_embed(
-        #     self.parent_view.embed.title_1,
-        #     self.parent_view.embed.description_1,
-        #     self.parent_view.embed.title_2,
-        #     self.parent_view.embed.description_2
-        # )
-        
-        await interaction.response.send_message("Embed Updated", ephemeral=True)
+        # edit the secondary message
+        elif self.title == "Secondary Message":
+            
+            if not title and not description:
+                if len(self.parent_view.embed.fields) == 1:
+                    self.parent_view.embed.remove_field(0)
+                    await self.message.edit(embed=self.parent_view.embed)
+            else:
+                if len(self.parent_view.embed.fields) == 1:
+                    self.parent_view.embed.set_field_at(0, name=title, value=description, inline=False)
+                else:
+                    self.parent_view.embed.add_field(name=title, value=description)
+                await self.message.edit(embed=self.parent_view.embed)
+
+        # submit to the target channel
+        elif self.title == "Submit Message":
+            await self.parent_view.target_channel.send(embed=self.parent_view.embed)
+            await interaction.response.send_message("Embed sent to specified channel! :D", ephemeral=False)
+
+        await interaction.response.send_message("Embed is updated! :D", ephemeral=True)
 
 class myMenu(discord.ui.View):
-    def __init__(self, embed):
+    def __init__(self, embed, channel):
         super().__init__()
         self.embed = embed
+        self.channel = channel
         self.value = None
         self.title_1 = None
         self.description_1 = None
@@ -81,6 +91,13 @@ class myMenu(discord.ui.View):
         modal = myModal(title="Secondary Message", parent_view=self, message=interaction.message)
         await interaction.response.send_modal(modal)
 
+    # submit to send the embed to the correct channel
+    @discord.ui.button(label="Submit", style=discord.ButtonStyle.red)
+    async def submit(self, interaction: discord.Interaction, button: discord.ui.Button):
+        target_channel = self.channel
+        await target_channel.send(embed=self.embed)
+        await interaction.response.send_message("Embed sent to the specified channel!", ephemeral=False)
+
 # ------------- EVENTS ------------------
 # after starting up, bot says something in specified channel
 @bot.event
@@ -95,14 +112,48 @@ async def hello(ctx):
     await ctx.send("Hello! :)")
 
 @bot.command()
-async def embed(ctx):
-    embed = discord.Embed(
+async def embed(ctx, channel:discord.TextChannel=None):
+    """
+    Creates an embed with menu buttons to edit the embed.
+    Takes an optional argument to send the embed to another channel.
+    """
+
+    target_channel = channel or ctx.channel
+
+    embed_info = discord.Embed(
+        title = "Let's create a cute embed \*ੈ✩‧₊˚",
+        description = (
+            "✧･ﾟ: *✧･ﾟ:\*\n"
+            "*So you want to create something cute, right?\n"
+            "To use this command, it's pretty simple~*\n\n"
+
+            "__Directions:˚ ༘♡ ⋆｡˚__\n"
+            "The **main message** contains a title and description. ༉‧₊˚.\n"
+            "- Input whatever you want for both of them.\n"
+            "- This is used for main focus or info at the start of the embed.\n"
+            "   - i.e. The rules and overall info for the rules.\n\n"
+
+            "The **secondary message** also contains a title and decription. ༉‧₊˚.\n"
+            "- Input whatever but it is *optional*.\n"
+            "- This is used if you want to add extra information such as:\n"
+            "   - i.e. a list of rules as subheaders and each rule information.\n\n"
+            
+
+            "When you are done, click **submit** and it will send over to the specified channel.\n"
+            "✧･ﾟ: \*✧･ﾟ:\*✧･ﾟ: \*✧･ﾟ:\*✧･ﾟ: \*✧･ﾟ:\* \n"
+        ),
+        color = 0xffabdc
+    )
+
+    embed_info.set_footer(text="If you didn't set a channel after !embed, it will send to this channel after clicking submit.")
+
+    embed_result = discord.Embed(
             title=" ",
             description=" ",
             color=0xffabdc
         )
-    view = myMenu(embed)
-    await ctx.reply(view=view)
+    view = myMenu(embed_result, target_channel)
+    await ctx.send(embed=embed_info,view=view)
 
 @bot.command()
 # async def embed(ctx):
