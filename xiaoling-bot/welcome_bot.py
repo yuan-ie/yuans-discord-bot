@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 keys = {}
 
-#reading key txt file
+# reading key txt file
 
 with open('keys.txt', 'r') as file:
     for line in file:
@@ -18,27 +18,23 @@ with open('keys.txt', 'r') as file:
                 
 
 
-#events
+# events
 
 
 #welcomes member upon joining
 @bot.event
 async def on_member_join(member):
     
-    #change to welcome channel ID
+    # change to welcome channel ID
     channel = bot.get_channel(keys['CHANNEL_ID'])
     
-    #other channels
+    # other channels
     rules_channel_id = 1367685195154591864
     intro_channel_id = 1367685212158296114
     verify_channel_id = 1367688296653652079
     
-    #setting up time
-    #unix_time = int(datetime.now(timezone.utc).timestamp())
     
-    
-    
-    #embeds
+    # embeds
     embed = discord.Embed(
         title ="**welcome to『yuanie's server』 !**",
         description=(
@@ -47,7 +43,7 @@ async def on_member_join(member):
             f"make sure to read <#{rules_channel_id}>, make an <#{intro_channel_id}>, "
             f"and <#{verify_channel_id}> before you chat!"
         ),
-        color=discord.Color.from_rgb(74, 46, 100)
+        color=0xffabdc
         
     )
     
@@ -58,26 +54,30 @@ async def on_member_join(member):
     )
     #embed.set_thumbnail(url="https://pbs.twimg.com/media/FsKbjMSaYAMAuuh.jpg")
     embed.set_image(url="https://i.pinimg.com/originals/58/2a/8c/582a8c8f1941f193f32697a9d0dbca3c.gif")
-    embed.set_footer(text=f"we are now at {len(member.guild.members)} members! • ")
+    embed.set_footer(text=f"we are now at {len(member.guild.members)} members! ")
     embed.timestamp = datetime.now(timezone.utc)
     
     
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    #sending embed to channel
+    # sending embed to channel
     await channel.send(embed=embed)
     
+
+
+
+    # manual greet
+    @bot.command()
+    async def testembed(ctx):
+        await on_member_join(ctx.guild)
+        
+
+
+
+
+
+
+
+
 
 
 
