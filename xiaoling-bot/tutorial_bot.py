@@ -19,7 +19,7 @@ with open('keys.txt', 'r') as file:
 
 # ------------- BUTTONS -----------------
 class myModal(discord.ui.Modal):
-    def __init__(self, title:str, parent_view, message:discord.Message):
+    def __init__(self, title:str, parent_view, message:discord.Message, prev_title="", prev_description=""):
         super().__init__(title=title)
 
         self.parent_view = parent_view
@@ -28,13 +28,14 @@ class myModal(discord.ui.Modal):
         is_secondary = self.title == "Secondary Message"
 
         # input title and description prompts
-        self.input_title = discord.ui.TextInput(label="Title", style=discord.TextStyle.short, required=not is_secondary)
-        self.input_description = discord.ui.TextInput(label="Description", style=discord.TextStyle.paragraph, required=not is_secondary)
+        self.input_title = discord.ui.TextInput(label="Title", style=discord.TextStyle.short, default=prev_title, required=not is_secondary)
+        self.input_description = discord.ui.TextInput(label="Description", style=discord.TextStyle.paragraph, default=prev_description, required=not is_secondary)
 
         # add to the popup
         self.add_item(self.input_title)
         self.add_item(self.input_description)
 
+    # submit for each modal (not the submit button)
     async def on_submit(self, interaction: discord.Interaction):
 
         # the input values from the user
@@ -43,13 +44,18 @@ class myModal(discord.ui.Modal):
 
         # edit the main message
         if self.title == "Main Message":
-            self.parent_view.embed.title=title
-            self.parent_view.embed.description=description
+            self.parent_view.embed.title = title
+            self.parent_view.embed.description = description
+            self.parent_view.prev_main_title = title
+            self.parent_view.prev_main_description = description
             await self.message.edit(embed=self.parent_view.embed)
 
         # edit the secondary message
         elif self.title == "Secondary Message":
             
+            self.parent_view.prev_secondary_title = title
+            self.parent_view.prev_secondary_description = description
+
             if not title and not description:
                 if len(self.parent_view.embed.fields) == 1:
                     self.parent_view.embed.remove_field(0)
@@ -74,21 +80,33 @@ class myMenu(discord.ui.View):
         self.embed = embed
         self.channel = channel
         self.value = None
-        self.title_1 = None
-        self.description_1 = None
-        self.title_2 = None
-        self.description_2 = None
+        self.prev_main_title = ""
+        self.prev_main_description = ""
+        self.prev_secondary_title = ""
+        self.prev_secondary_description = ""
 
     # button to enter main message
     @discord.ui.button(label="Main Message", style=discord.ButtonStyle.grey)
     async def main(self, interaction: discord.Interaction, button: discord.ui.Button):
-        modal = myModal(title="Main Message", parent_view=self, message=interaction.message)
+        modal = myModal(
+            title="Main Message",
+            parent_view=self,
+            message=interaction.message,
+            prev_title=self.prev_main_title,
+            prev_description=self.prev_main_description
+            )
         await interaction.response.send_modal(modal)
 
     # button to enter secondary message
     @discord.ui.button(label="Secondary Message", style=discord.ButtonStyle.grey)
     async def secondary(self, interaction: discord.Interaction, button: discord.ui.Button):
-        modal = myModal(title="Secondary Message", parent_view=self, message=interaction.message)
+        modal = myModal(
+            title="Secondary Message",
+            parent_view=self,
+            message=interaction.message,
+            prev_title=self.prev_secondary_title,
+            prev_description=self.prev_secondary_description
+            )
         await interaction.response.send_modal(modal)
 
     # submit to send the embed to the correct channel
@@ -156,57 +174,8 @@ async def embed(ctx, channel:discord.TextChannel=None):
     await ctx.send(embed=embed_info,view=view)
 
 @bot.command()
-# async def embed(ctx):
-#     embed=discord.Embed(title="Embed Title", description="this is the embed title description", color=0xffabdc)
-#     # embed.set_thumbnail(url="https://i.imgur.com/axLm3p6.jpeg")
-#     embed.add_field(name="embed field 1", value="description")
-#     embed.add_field(name="embed field 2", value="description", inline=True)
-#     embed.add_field(name="embed field 3", value="description", inline=True)
-#     embed.set_footer(text="This is the footer. It contains text at the bottom of the embed")
-#     await ctx.send(embed=embed)
 
-async def embed2(ctx, *args):
-    """
-    displays messages in embed. mainly for setting up rules and other important things.
-    usage: !embed <title> <description> <field1_name> <field1_value> <field2_name> <field2_value> ...
-    example: !embed `rules` `here are the rules` `rule #1`... 
-    """
 
-    if not args:
-        await ctx.send("Please enter the correct format: !embed `rules` `here are the rules` `rule #1`... ")
-        return
-
-    if len(args) >= 2:
-        title = args[0]
-        description = args[1]
-    else:
-        await ctx.send("At least put a title and description. :(")
-        return
-
-    embed=discord.Embed(
-        title=title,
-        description=description,
-        color=0xffabdc
-    )
-
-    for i in range(2, len(args), 2):
-        if i+1 < len(args):
-            field_name = args[i]
-            field_value = args[i+1]
-            embed.add_field(
-                name=field_name,
-                value=field_value,
-                inline=False
-                )
-
-    # embed=discord.Embed(title="Embed Title", description="this is the embed title description", color=0xffabdc)
-    # # embed.set_thumbnail(url="https://i.imgur.com/axLm3p6.jpeg")
-    # embed.add_field(name="embed field 1", value="description")
-    # embed.add_field(name="embed field 2", value="description", inline=True)
-    # embed.add_field(name="embed field 3", value="description", inline=True)
-    # embed.set_footer(text="This is the footer. It contains text at the bottom of the embed")
-    await ctx.send(embed=embed)
-    
 
 # RUN THE BOT
 bot.run(keys['BOT_TOKEN'])
