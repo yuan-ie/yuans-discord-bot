@@ -34,7 +34,7 @@ async def on_member_join(member):
     verify_channel_id = 1367688296653652079
     
     #setting up time
-    unix_time = int(datetime.now(timezone.utc).timestamp())
+    #unix_time = int(datetime.now(timezone.utc).timestamp())
     
     
     
@@ -58,7 +58,8 @@ async def on_member_join(member):
     )
     #embed.set_thumbnail(url="https://pbs.twimg.com/media/FsKbjMSaYAMAuuh.jpg")
     embed.set_image(url="https://i.pinimg.com/originals/58/2a/8c/582a8c8f1941f193f32697a9d0dbca3c.gif")
-    embed.set_footer(text=f"we are now at {len(member.guild.members)} members! • <t:{unix_time}:f>")
+    embed.set_footer(text=f"we are now at {len(member.guild.members)} members! • ")
+    embed.timestamp = datetime.now(timezone.utc)
     
     
     
