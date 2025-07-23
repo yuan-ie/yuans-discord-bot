@@ -174,7 +174,32 @@ async def embed(ctx, channel:discord.TextChannel=None):
     await ctx.send(embed=embed_info,view=view)
 
 @bot.command()
+async def rolesid(ctx):
+    embed = discord.Embed(
+        title="✧˚ · .Important Roles & Pings ID ༊\*·˚",
+        description=(
+            "⋇⊶⊰❣⊱⊷⋇\n"
+            "__**role pings**__\n"
+            "constellations: 1372276066185383936\n"
+            "asterisms: 1375331835294253096\n"
+            "white stars: 1367690008701440091\n"
 
+            "\n__**other pings**__\n"
+            "everyone: 1367690008701440091\n"
+            "announcements: 1367692659799359489\n"
+            
+            "\n__**channels**__\n"
+            "intro: 1367685212158296114\n"
+            "verify: 1367688296653652079\n"
+            "rules: 1367685195154591864\n"
+            "roles: 1367686827833688215\n"
+
+            "\nTo use a roleID, put the ID in <@&...>\nsuch as \<\@\&12345678\>"
+        ),
+        color=0xffabdc
+    )
+
+    await ctx.send(embed=embed)
 
 
 # RUN THE BOT
