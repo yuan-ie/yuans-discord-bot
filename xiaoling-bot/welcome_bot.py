@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from datetime import datetime
+from datetime import datetime, timezone
 
 bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 keys = {}
@@ -34,7 +34,7 @@ async def on_member_join(member):
     verify_channel_id = 1367688296653652079
     
     #setting up time
-    unix_time = int(datetime.utcnow().timestamp())
+    unix_time = int(datetime.now(timezone.utc).timestamp())
     
     
     
@@ -43,7 +43,7 @@ async def on_member_join(member):
         title ="**welcome to『yuanie's server』 !**",
         description=(
             f"{member.mention} just joined! we hope you enjoy your time here :D\n\n"
-            "─✦─ ✧ ✦─\n\n"
+            "ﾟ+\*:ꔫ:\*\﹤\n\n"
             f"make sure to read <#{rules_channel_id}>, make an <#{intro_channel_id}>, "
             f"and <#{verify_channel_id}> before you chat!"
         ),
@@ -58,7 +58,6 @@ async def on_member_join(member):
     )
     #embed.set_thumbnail(url="https://pbs.twimg.com/media/FsKbjMSaYAMAuuh.jpg")
     embed.set_image(url="https://i.pinimg.com/originals/58/2a/8c/582a8c8f1941f193f32697a9d0dbca3c.gif")
-    embed.add_field(name="Rules", value="Please check #rules!", inline=False)
     embed.set_footer(text=f"we are now at {len(member.guild.members)} members! • <t:{unix_time}:f>")
     
     
