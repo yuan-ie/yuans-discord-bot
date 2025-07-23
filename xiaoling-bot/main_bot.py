@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+import data.id_files as idfiles
 
 # prefix to run a command for Xiaoling bot.
 bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
@@ -175,90 +176,73 @@ async def embed(ctx, channel:discord.TextChannel=None):
     await ctx.send(embed=embed_info,view=view)
 
 @bot.command()
-async def rolesid(ctx):
+async def roleid(ctx):
     embed = discord.Embed(
-        title="✧˚ · .Important Roles & Pings ID ༊\*·˚",
-        description=(
-            "⋇⊶⊰❣⊱⊷⋇\n"
-            "__**role pings**__\n"
-            "star overseer: <@&1367682907472134145> 1367682907472134145\n"
-            "star gazer: <@&1384385366907293737> 1384385366907293737\n"
-            "shooting stars: <@&1387267272074068161> 1387267272074068161\n"
-            "constellations: <@&1372276066185383936> 1372276066185383936\n"
-            "asterisms: <@&1375331835294253096> 1375331835294253096\n"
-            "booster: <@&1386293381663297727> 1386293381663297727\n"
-            "asteroids: <@&1373069041383510138> 1373069041383510138\n"
-            "white stars: <@&1367690008701440091> 1367690008701440091\n"
-            "strike 1: <@&1373141630407671900> 1373141630407671900\n"
-            "strike 2: <@&1377866263568846978> 1377866263568846978\n"
-            "strike 3: <@&1377866334792187925> 1377866334792187925\n"
-            "level 10: <@&1373063974798622800> 1373063974798622800\n"
-            "level 5: <@&1373063914018963587> 1373063914018963587\n"
-            "level 1: <@&1373063865918685275> 1373063865918685275\n"
-            "❀\n"
-
-            "\n__**pings**__\n"
-            "announcements: <@&1367692659799359489> 1367692659799359489\n"
-            "yuanie uploads: <@&1367692693228097646> 1367692693228097646\n"
-            "vid requests: <@&1367692796915355840> 1367692796915355840\n"
-            "polls: <@&1367693118174007358> 1367693118174007358\n"
-            "movie night: <@&1396094749877731378> 1396094749877731378\n"
-            "game night: <@&1396094809420075019> 1396094809420075019\n"
-            "karaoke night: <@&1396094832182821005> 1396094832182821005\n"
-            "art event: <@&1396094868723601479> 1396094868723601479\n"
-            "❀\n"
-
-            "\n__**channels**__\n"
-            "intro: <#1367685212158296114> 1367685212158296114\n"
-            "verify: <#&1367688296653652079> 1367688296653652079\n"
-            "rules: <#1367685195154591864> 1367685195154591864\n"
-            "roles: <#1367686827833688215> 1367686827833688215\n"
-            "❀\n"
-
-            "\n__**age**__\n"
-            "13-15: <@&1386228061027962890> 1386228061027962890\n"
-            "16-17: <@&1386228212765294612> 1386228212765294612\n"
-            "18-20: <@&1386228256369414154> 1386228256369414154\n"
-            "20+: <@&1386228292851470386> 1386228292851470386\n"
-            "❀\n"
-
-            "\n__**pronouns**__\n"
-            "she/her: <@&1367694769840717845> 1367694769840717845\n"
-            "he/him: <@&1372269262403801128> 1372269262403801128\n"
-            "they/them: <@&1372269357224431626> 1372269357224431626\n"
-            "other/ask: <@&1372269384973811773> 1372269384973811773\n"
-            "❀\n"
-
-            "\n__**regions**__\n"
-            "North America: <@&1390372038425837728> 1390372038425837728\n"
-            "South America: <@&1390372092477837482> 1390372092477837482\n"
-            "Asia: <@&1390372128502714388> 1390372128502714388\n"
-            "Europe: <@&1390372143044235475> 1390372143044235475\n"
-            "Africa: <@&1390372159695884318> 1390372159695884318\n"
-            "Oceania: <@&1390372173826494716> 1390372173826494716\n"
-            "❀\n"
-
-            "\n__**colors**__\n"
-            "❣ BOOSTERS/lv10\n"
-            "gold: <@&1373068248521773286> 1373068248521773286\n"
-            "terra: <@&1387225033637625907> 1387225033637625907\n"
-            "❣ BOOSTERS/lv5\n"
-            "peach pink: <@&1373068336170008616> 1373068336170008616\n"
-            "pink: <@&1373068263130665142> 1373068263130665142\n"
-            "❣ DEFAULT\n"
-            "jade green: <@&1373070146800713768> 1373070146800713768\n"
-            "sky blue: <@&1373070305412780152> 1373070305412780152\n"
-            "pale blue: <@&1373070403710222446> 1373070403710222446\n"
-            "white: <@&1373070562859024465> 1373070562859024465\n"
-            "cream: <@&1373070497322897589> 1373070497322897589\n"
-            "❀\n"
-
-            "\nTo use a roleID, put the ID in <@&...>\nsuch as \<\@\&12345678\>\n"
-            "\nTo use a channelID, put the ID in <#...>\nsuch as \<\#12345678\>\n"
-        ),
+        title=idfiles.title,
+        description=idfiles.roleid,
         color=0xffabdc
     )
+    embed.set_footer(text=idfiles.footer)
+    await ctx.send(embed=embed)
 
+@bot.command()
+async def pingid(ctx):
+    embed = discord.Embed(
+        title=idfiles.title,
+        description=idfiles.pingid,
+        color=0xffabdc
+    )
+    embed.set_footer(text=idfiles.footer)
+    await ctx.send(embed=embed)
+
+@bot.command()
+async def channelid(ctx):
+    embed = discord.Embed(
+        title=idfiles.title,
+        description=idfiles.channelid,
+        color=0xffabdc
+    )
+    embed.set_footer(text=idfiles.footer)
+    await ctx.send(embed=embed)
+
+@bot.command()
+async def ageid(ctx):
+    embed = discord.Embed(
+        title=idfiles.title,
+        description=idfiles.ageid,
+        color=0xffabdc
+    )
+    embed.set_footer(text=idfiles.footer)
+    await ctx.send(embed=embed)
+
+@bot.command()
+async def pronounid(ctx):
+    embed = discord.Embed(
+        title=idfiles.title,
+        description=idfiles.pronounid,
+        color=0xffabdc
+    )
+    embed.set_footer(text=idfiles.footer)
+    await ctx.send(embed=embed)
+
+@bot.command()
+async def regionid(ctx):
+    embed = discord.Embed(
+        title=idfiles.title,
+        description=idfiles.regionid,
+        color=0xffabdc
+    )
+    embed.set_footer(text=idfiles.footer)
+    await ctx.send(embed=embed)
+
+@bot.command()
+async def colorid(ctx):
+    embed = discord.Embed(
+        title=idfiles.title,
+        description=idfiles.colorid,
+        color=0xffabdc
+    )
+    embed.set_footer(text=idfiles.footer)
     await ctx.send(embed=embed)
 
 
