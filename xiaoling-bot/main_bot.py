@@ -138,8 +138,10 @@ async def embed(ctx, channel:discord.TextChannel=None):
     Takes an optional argument to send the embed to another channel.
     """
 
+    # optional
     target_channel = channel or ctx.channel
 
+    # embed message that displays how to use this command
     embed_info = discord.Embed(
         title = "Let's create a cute embed \*ੈ✩‧₊˚",
         description = (
@@ -167,6 +169,7 @@ async def embed(ctx, channel:discord.TextChannel=None):
 
     embed_info.set_footer(text="If you didn't set a channel after !embed, it will send to this channel after clicking submit.")
 
+    # empty embed message that stores user input
     embed_result = discord.Embed(
             title=" ",
             description=" ",
@@ -175,6 +178,7 @@ async def embed(ctx, channel:discord.TextChannel=None):
     view = myMenu(embed_result, target_channel)
     await ctx.send(embed=embed_info,view=view)
 
+# display role ids
 @bot.command()
 async def roleid(ctx):
     embed = discord.Embed(
@@ -185,6 +189,7 @@ async def roleid(ctx):
     embed.set_footer(text=idfiles.footer)
     await ctx.send(embed=embed)
 
+# display ping ids
 @bot.command()
 async def pingid(ctx):
     embed = discord.Embed(
@@ -195,6 +200,7 @@ async def pingid(ctx):
     embed.set_footer(text=idfiles.footer)
     await ctx.send(embed=embed)
 
+# display channel ids
 @bot.command()
 async def channelid(ctx):
     embed = discord.Embed(
@@ -205,6 +211,7 @@ async def channelid(ctx):
     embed.set_footer(text=idfiles.footer)
     await ctx.send(embed=embed)
 
+# display age ids
 @bot.command()
 async def ageid(ctx):
     embed = discord.Embed(
@@ -215,6 +222,7 @@ async def ageid(ctx):
     embed.set_footer(text=idfiles.footer)
     await ctx.send(embed=embed)
 
+# display pronoun ids
 @bot.command()
 async def pronounid(ctx):
     embed = discord.Embed(
@@ -225,6 +233,7 @@ async def pronounid(ctx):
     embed.set_footer(text=idfiles.footer)
     await ctx.send(embed=embed)
 
+# display region ids
 @bot.command()
 async def regionid(ctx):
     embed = discord.Embed(
@@ -235,6 +244,7 @@ async def regionid(ctx):
     embed.set_footer(text=idfiles.footer)
     await ctx.send(embed=embed)
 
+# display color ids
 @bot.command()
 async def colorid(ctx):
     embed = discord.Embed(
