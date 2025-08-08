@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from datetime import datetime
+import random
 # import data.id_files as idfiles
 
 # prefix to run a command for Xiaoling bot.
@@ -20,6 +21,7 @@ with open('keys.txt', 'r') as file:
                 keys[key] = value
 
 # ------------------------------------------------------------
+#                    CLASSES
 # ------------------------------------------------------------
 
 class adoptModal(discord.ui.Modal):
@@ -92,6 +94,9 @@ class adoptMenu(discord.ui.View):
         date_adopted = datetime.now().strftime("%B %d, %Y")
         pets_data[self.author_id]['date_adopted'] = date_adopted
 
+        # pet heart status initialized to 0
+        pets_data[self.author_id]['hearts_status'] = 0
+
         # success message
         self.embed.description = f"Congratulations! You just adopted a new pet on **{date_adopted}** and decided to name it **{self.prev_petname.upper()}**!! ꉂ(˵˃ ᗜ ˂˵)!"
 
@@ -103,6 +108,7 @@ class adoptMenu(discord.ui.View):
         await interaction.response.send_message(f"You successfully adopted a new pet!", ephemeral=True)
 
 # ------------------------------------------------------------
+#                    USER FUNCTIONS
 # ------------------------------------------------------------
 
 pets_data = {}
@@ -160,6 +166,93 @@ async def petinfo(ctx):
         color = 0x94c2ff
     )
     await ctx.send(embed=embed)
+
+@bot.command()
+async def petabandon(ctx):
+    """
+    Abandon pet...
+    """
+
+    author_id = ctx.author.id
+    pet = pets_data.get(author_id)
+
+    # error check if there is no pet adopted
+    if not pet:
+        await ctx.send("You have not adopted a pet yet!")
+        return
+    
+    # delete the user's pet information
+    del pets_data[author_id]
+
+    await ctx.send("You have successfully abandoned the pet...")
+
+@bot.command()
+async def petstatus(ctx):
+    """
+    Display heart status of pet. It will increase with interactions.
+    """
+
+    author_id = ctx.author.id
+    pet = pets_data.get(author_id)
+
+    # error check if there is no pet adopted
+    if not pet:
+        await ctx.send("You have not adopted a pet yet!")
+        return
+    
+    pet_name = pets_data[author_id]['pet_name']
+
+    match pets_data[author_id]['hearts_status']:
+        case x if x < 1:
+            hearts_status = f"# ♡ ♡ ♡ ♡ ♡\n{pet_name} feels tense around you..."
+        case x if x < 2:
+            hearts_status = f"# ❤︎ ♡ ♡ ♡ ♡\n{pet_name} is starting to warm up to you but still on edge."
+        case x if x < 3:
+            hearts_status = f"# ❤︎ ❤︎ ♡ ♡ ♡\n{pet_name} is tolerating your existence."
+        case x if x < 4:
+            hearts_status = f"# ❤︎ ❤︎ ❤︎ ♡ ♡\n{pet_name} feels safe with you and trusts you'll keep it alive."
+        case x if x < 5:
+            hearts_status = f"# ❤︎ ❤︎ ❤︎ ❤︎ ♡\n{pet_name} likes you a lot and feels very comfortable with you."
+        case x if x >= 5:
+            hearts_status = f"# ❤︎ ❤︎ ❤︎ ❤︎ ❤︎\n{pet_name} LOVES YOU SOOO MUCH!!"
+
+    embed = discord.Embed(
+        title = "Pet Status\*ੈ✩‧₊˚",
+        description = hearts_status,
+        color = 0x94c2ff
+    )
+    embed.set_footer(text="*To increase the heart status, interact with your pet often!*")
+    
+    await ctx.send(embed=embed)
+
+@bot.command()
+async def petpet(ctx):
+    """
+    Interact with pet by petting.
+    """
+
+    author_id = ctx.author.id
+    pet = pets_data.get(author_id)
+
+    # error check if there is no pet adopted
+    if not pet:
+        await ctx.send("You have not adopted a pet yet!")
+        return
+    
+    pet_name = pets_data[author_id]['pet_name']
+    hearts_status = pets_data[author_id]['hearts_status']
+
+    # pet_rng =  random.randint(1, 6 - int(hearts_status))
+    pet_rng = random.randint(0,1)
+    print(f'pet random number {pet_rng}!')
+
+    if pet_rng == 1:
+        
+        if hearts_status != 5:
+            pets_data[author_id]['hearts_status'] += 0.5
+        await ctx.send(f"{pet_name} purrs and rolls around as you're petting.")
+    else:
+        await ctx.send(f"{pet_name} avoids your hand and glares at you...")
 
 # RUN THE BOT
 bot.run(keys['BOT_TOKEN'])
