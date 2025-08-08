@@ -45,6 +45,7 @@ class myModal(discord.ui.Modal):
 
         # edit the main message
         if self.title == "Main Message":
+            
             self.parent_view.embed.title = title
             self.parent_view.embed.description = description
             self.parent_view.prev_main_title = title
@@ -53,14 +54,16 @@ class myModal(discord.ui.Modal):
 
         # edit the secondary message
         elif self.title == "Secondary Message":
-            
+            # save the inputs and store and previous inputs
             self.parent_view.prev_secondary_title = title
             self.parent_view.prev_secondary_description = description
 
+            # remove the second field if no input
             if not title and not description:
                 if len(self.parent_view.embed.fields) == 1:
                     self.parent_view.embed.remove_field(0)
                     await self.message.edit(embed=self.parent_view.embed)
+            # else, edit the second field
             else:
                 if len(self.parent_view.embed.fields) == 1:
                     self.parent_view.embed.set_field_at(0, name=title, value=description, inline=False)
