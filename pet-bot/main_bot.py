@@ -5,14 +5,21 @@ import random
 import csv
 import os
 from file_function import check_userinfo, add_userinfo, remove_userinfo, retrieve_info
+from tracker_function import intial_interact, pet_interact
 # import data.id_files as idfiles
 
 # create a file (if it doesn't exist that stores all the information)
-filename = "pet_datafile.csv"
+userfile = "user_file.csv"
+trackerfile = "tracker_file.csv"
 
-if not os.path.exists(filename):
-    with open(filename, mode="w", newline="") as file:
+if not os.path.exists(userfile):
+    with open(userfile, mode="w", newline="") as file:
         writer = csv.DictWriter(file, fieldnames=["userid", "pet_name", "date_adopted", "hearts_status"])
+        writer.writeheader()
+
+if not os.path.exists(trackerfile):
+    with open(trackerfile, mode="w", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=["userid", "pet", "fed", "bath"])
         writer.writeheader()
 
 # prefix to run a command for Xiaoling bot.
@@ -97,7 +104,7 @@ class adoptMenu(discord.ui.View):
         date_adopted = datetime.now().strftime("%B %d, %Y")
 
         # initialize user's pet information (userid, pet name, date adopted, hearts status, and update flag(0 or 1))
-        value = add_userinfo(filename, self.author_id, self.prev_pet_name.upper(), date_adopted, 0, 0)
+        value = add_userinfo(userfile, self.author_id, self.prev_pet_name.upper(), date_adopted, 0, 0)
 
         if value == 1:
             # success message
@@ -130,12 +137,15 @@ async def adopt(ctx):
     """
 
     author_id = ctx.author.id
-    pet = check_userinfo(filename, author_id)
+    pet = check_userinfo(userfile, author_id)
 
     # error check if there is no pet adopted
     if pet:
         await ctx.send("You already have a pet!")
         return
+    
+    # add interaction tracking information
+    intial_interact(trackerfile, author_id)
 
     embed = discord.Embed(
         title = "Let's adopt a pet~ \*ੈ✩‧₊˚",
@@ -155,14 +165,14 @@ async def info(ctx):
     Sends an embed to view the info of the user's pet.
     """
     author_id = ctx.author.id
-    pet = check_userinfo(filename, author_id)
+    pet = check_userinfo(userfile, author_id)
 
     # error check if there is no pet adopted
     if not pet:
         await ctx.send("You have not adopted a pet yet!")
         return
     
-    user = retrieve_info(filename, author_id)
+    user = retrieve_info(userfile, author_id)
     
     # display pet info
     embed = discord.Embed(
@@ -182,7 +192,7 @@ async def abandon(ctx):
     """
 
     author_id = ctx.author.id
-    pet = check_userinfo(filename, author_id)
+    pet = check_userinfo(userfile, author_id)
 
     # error check if there is no pet adopted
     if not pet:
@@ -190,7 +200,7 @@ async def abandon(ctx):
         return
     
     # delete the user's pet information
-    remove_userinfo(filename, author_id)
+    remove_userinfo(userfile, author_id)
 
     await ctx.send("You have successfully abandoned the pet...")
 
@@ -201,14 +211,14 @@ async def status(ctx):
     """
 
     author_id = ctx.author.id
-    pet = check_userinfo(filename, author_id)
+    pet = check_userinfo(userfile, author_id)
 
     # error check if there is no pet adopted
     if not pet:
         await ctx.send("You have not adopted a pet yet!")
         return
     
-    user = retrieve_info(filename, author_id)
+    user = retrieve_info(userfile, author_id)
     pet_name = user['pet_name']
 
     match float(user['hearts_status']):
@@ -241,14 +251,20 @@ async def pet(ctx):
     """
 
     author_id = ctx.author.id
-    pet = check_userinfo(filename, author_id)
+    pet = check_userinfo(userfile, author_id)
 
     # error check if there is no pet adopted
     if not pet:
         await ctx.send("You have not adopted a pet yet!")
         return
     
-    user = retrieve_info(filename, author_id)
+    user = retrieve_info(userfile, author_id)
+    value = pet_interact(trackerfile, author_id)
+
+    # check if reached the max number of pet interacts
+    if value == 0:
+        await ctx.send(f"{user['pet_name']} doesn't want anymore pets!")
+        return
     
     pet_name = user['pet_name']
     hearts_status = float(user['hearts_status'])
@@ -261,7 +277,7 @@ async def pet(ctx):
         if hearts_status < 5:
             hearts_status += 0.5
         value = add_userinfo(
-            filename=filename,
+            filename=userfile,
             userid=user['userid'],
             pet_name=user['pet_name'],
             date_adopted=user['date_adopted'],
