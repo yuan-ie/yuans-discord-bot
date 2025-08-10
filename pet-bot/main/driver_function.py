@@ -2,29 +2,20 @@ import discord
 from discord.ext import commands
 from datetime import datetime
 import random
-import csv
 import os
-from file_function import check_userinfo, add_userinfo, remove_userinfo, retrieve_info
-from tracker_function import intial_interact, pet_interact, feed_interact, bath_interact, remove_interacts, check_interact
-# import data.id_files as idfiles
+import sqlite3
+from tracker_function import pet_interact, feed_interact, bath_interact
+from database_function import create_database, add_data, update_data, remove_data, search_data, retrieve_data
 
-# create a file (if it doesn't exist that stores all the information)
-userfile = "datafiles/user_file.csv"
-trackerfile = "datafiles/tracker_file.csv"
-datafolder = "datafiles"
+datafolder = "../data"
+datafile = "../data/database.db"
 
+# create folder if it does not exist
 if not os.path.exists(datafolder):
     os.mkdir(datafolder)
 
-if not os.path.exists(userfile):
-    with open(userfile, mode="w", newline="") as file:
-        writer = csv.DictWriter(file, fieldnames=["userid", "pet_name", "date_adopted", "hearts_status"])
-        writer.writeheader()
-
-if not os.path.exists(trackerfile):
-    with open(trackerfile, mode="w", newline="") as file:
-        writer = csv.DictWriter(file, fieldnames=["userid", "pet", "pet_log", "fed", "fed_log", "bath", "bath_log"])
-        writer.writeheader()
+# create empty database if it does not exist
+create_database(datafile=datafile)
 
 # prefix to run a command for Xiaoling bot.
 bot = commands.Bot(command_prefix="+", intents=discord.Intents.all())
@@ -33,7 +24,7 @@ bot = commands.Bot(command_prefix="+", intents=discord.Intents.all())
 keys = {}
 
 # read the key textfile to get bot token and channel ID
-with open('keys.txt', 'r') as file:
+with open('../keys.txt', 'r') as file:
     for line in file:
         if '=' in line:
             key, value = line.strip().split('=',1)
@@ -104,13 +95,27 @@ class adoptMenu(discord.ui.View):
     @discord.ui.button(label="Confirm", style=discord.ButtonStyle.red)
     async def submit(self, interaction: discord.Interaction, button: discord.ui.Button):
 
-        # get the date and store the date in user information
-        date_adopted = datetime.now().strftime("%B %d, %Y")
+        # if name is left blank
+        if self.prev_pet_name == "":
+            await interaction.response.send_message("You haven't decided a name yet!", ephemeral=True)
+        else:
+            # get the date and store the date in user information
+            date_adopted = datetime.now().strftime("%B %d, %Y")
 
-        # initialize user's pet information (userid, pet name, date adopted, hearts status, and update flag(0 or 1))
-        value = add_userinfo(userfile, self.author_id, self.prev_pet_name.upper(), date_adopted, 0, 0)
+            # initialize user's pet information (userid, pet name, date adopted, hearts status, and update flag(0 or 1))
+            add_data(
+                filename=datafile,
+                userid=self.author_id,
+                pet_name=self.prev_pet_name.upper(),
+                date_adopted=date_adopted,
+                hearts_status=0,
+                pet=0,
+                pet_log="",
+                feed=0,
+                feed_log="",
+                bath=0,
+                bath_log="")
 
-        if value == 1:
             # success message
             self.embed.description = f"Congratulations! You just adopted a new pet on **{date_adopted}** and decided to name it **{self.prev_pet_name.upper()}**!! ꉂ(˵˃ ᗜ ˂˵)!"
 
@@ -120,9 +125,6 @@ class adoptMenu(discord.ui.View):
                     child.disabled = True
             await interaction.message.edit(embed=self.embed, view=self)
             await interaction.response.send_message(f"You successfully adopted a new pet!", ephemeral=True)
-        else:
-            await interaction.response.send_message("You have not adopted a pet yet!", ephemeral=True)
-            return
         
 # ------------------------------------------------------------
 #                    USER FUNCTIONS
@@ -139,15 +141,12 @@ async def adopt(ctx):
     """
 
     author_id = ctx.author.id
-    pet = check_userinfo(userfile, author_id)
+    pet = search_data(datafile, author_id)
 
     # error check if there is no pet adopted
     if pet:
         await ctx.send("You already have a pet!")
         return
-    
-    # add interaction tracking information
-    intial_interact(trackerfile, author_id)
 
     embed = discord.Embed(
         title = "Let's adopt a pet~ \*ੈ✩‧₊˚",
@@ -167,21 +166,22 @@ async def info(ctx):
     Sends an embed to view the info of the user's pet.
     """
     author_id = ctx.author.id
-    pet = check_userinfo(userfile, author_id)
+    pet = search_data(datafile, author_id)
 
     # error check if there is no pet adopted
     if not pet:
         await ctx.send("You have not adopted a pet yet!")
         return
     
-    user = retrieve_info(userfile, author_id)
+    pet_name = retrieve_data(datafile, author_id, "pet_name")
+    date_adopted = retrieve_data(datafile, author_id, "date_adopted")
     
     # display pet info
     embed = discord.Embed(
         title = "⋆. 𐙚 ˚ Pet Info ₍^. .^₎⟆ \✧˚ ⋆｡˚",
         description = (
-            f"Name: **{user['pet_name']}** ₊˚⊹ ᰔ\n"
-            f"Date Adopted: {user['date_adopted']} \n"
+            f"Name: **{pet_name}** ₊˚⊹ ᰔ\n"
+            f"Date Adopted: {date_adopted} \n"
         ),
         color = 0x94c2ff
     )
@@ -194,7 +194,7 @@ async def abandon(ctx):
     """
 
     author_id = ctx.author.id
-    pet = check_userinfo(userfile, author_id)
+    pet = search_data(datafile, author_id)
 
     # error check if there is no pet adopted
     if not pet:
@@ -202,8 +202,7 @@ async def abandon(ctx):
         return
     
     # delete the user's pet information
-    remove_userinfo(userfile, author_id)
-    remove_interacts(trackerfile, author_id)
+    remove_data(datafile, author_id)
 
     await ctx.send("You have successfully abandoned the pet...")
 
@@ -214,17 +213,17 @@ async def hearts(ctx):
     """
 
     author_id = ctx.author.id
-    pet = check_userinfo(userfile, author_id)
+    pet = search_data(datafile, author_id)
 
     # error check if there is no pet adopted
     if not pet:
         await ctx.send("You have not adopted a pet yet!")
         return
     
-    user = retrieve_info(userfile, author_id)
-    pet_name = user['pet_name']
+    hearts_status = retrieve_data(datafile, author_id, "hearts_status")
+    pet_name = retrieve_data(datafile, author_id, "pet_name")
 
-    match float(user['hearts_status']):
+    match float(hearts_status):
         case x if x < 1:
             hearts_status = f"# ♡ ♡ ♡ ♡ ♡\n⤷ ゛{pet_name} feels tense around you...\n"
         case x if x < 2:
@@ -256,39 +255,35 @@ async def pet(ctx):
     """
 
     author_id = ctx.author.id
-    pet = check_userinfo(userfile, author_id)
+    pet = search_data(datafile, author_id)
 
     # error check if there is no pet adopted
     if not pet:
         await ctx.send("You have not adopted a pet yet!")
         return
     
-    user = retrieve_info(userfile, author_id)
-    value = pet_interact(trackerfile, author_id)
+    pet_name = retrieve_data(datafile, author_id, "pet_name")
+    pet = retrieve_data(datafile, author_id, "pet")
+    pet_log = retrieve_data(datafile, author_id, "pet_log")
+    hearts_status = retrieve_data(datafile, author_id, "hearts_status")
+
+    new_pet_count, new_pet_log, flag = pet_interact(pet, pet_log)
+    update_data(datafile, author_id, "pet", new_pet_count)
+    update_data(datafile, author_id, "pet_log", new_pet_log)
 
     # check if reached the max number of pet interacts
-    if value == 0:
-        await ctx.send(f"{user['pet_name']} doesn't want anymore pets!")
+    if flag is False:
+        await ctx.send(f"{pet_name} doesn't want anymore pets!")
         return
     
-    pet_name = user['pet_name']
-    hearts_status = float(user['hearts_status'])
+    hearts_status = float(hearts_status)
 
     pet_rng =  random.randint(0, int((6 - int(hearts_status)) / 2))
-    print(f'pet random number {pet_rng}!')
 
     if pet_rng == 0:
-        
         if hearts_status < 5:
             hearts_status += 0.25
-        value = add_userinfo(
-            filename=userfile,
-            userid=user['userid'],
-            pet_name=user['pet_name'],
-            date_adopted=user['date_adopted'],
-            hearts_status=hearts_status,
-            update=1
-        )
+            update_data(datafile, author_id, "hearts_status", hearts_status)
         await ctx.send(f"{pet_name} purrs and rolls around as you're petting.")
     else:
         await ctx.send(f"{pet_name} avoids your hand and glares at you...")
@@ -300,34 +295,33 @@ async def feed(ctx):
     """
 
     author_id = ctx.author.id
-    pet = check_userinfo(userfile, author_id)
+    pet = search_data(datafile, author_id)
 
     # error check if there is no pet adopted
     if not pet:
         await ctx.send("You have not adopted a pet yet!")
         return
     
-    user = retrieve_info(userfile, author_id)
-    value = feed_interact(trackerfile, author_id)
+    pet_name = retrieve_data(datafile, author_id, "pet_name")
+    feed = retrieve_data(datafile, author_id, "feed")
+    feed_log = retrieve_data(datafile, author_id, "feed_log")
+    hearts_status = retrieve_data(datafile, author_id, "hearts_status")
+
+    new_feed_count, new_feed_log, flag = feed_interact(feed, feed_log)
+    update_data(datafile, author_id, "feed", new_feed_count)
+    update_data(datafile, author_id, "feed_log", new_feed_log)
 
     # check if reached the max number of pet interacts
-    if value == 0:
-        await ctx.send(f"{user['pet_name']} can't eat another bite..")
+    if flag is False:
+        await ctx.send(f"{pet_name} can't eat another bite..")
         return
 
-    pet_name = user['pet_name']
-    hearts_status = float(user['hearts_status'])
+    hearts_status = float(hearts_status)
 
     if hearts_status < 5:
         hearts_status += 0.4
-    value = add_userinfo(
-        filename=userfile,
-        userid=user['userid'],
-        pet_name=user['pet_name'],
-        date_adopted=user['date_adopted'],
-        hearts_status=hearts_status,
-        update=1
-    )
+        update_data(datafile, author_id, "hearts_status", hearts_status)
+
     response_rng = random.randint(1,3)
     match response_rng:
         case 1: await ctx.send(f"{pet_name} gobbles up the food like this is its last meal.")
@@ -341,34 +335,32 @@ async def bath(ctx):
     """
 
     author_id = ctx.author.id
-    pet = check_userinfo(userfile, author_id)
+    pet = search_data(datafile, author_id)
 
     # error check if there is no pet adopted
     if not pet:
         await ctx.send("You have not adopted a pet yet!")
         return
     
-    user = retrieve_info(userfile, author_id)
-    value = bath_interact(trackerfile, author_id)
+    pet_name = retrieve_data(datafile, author_id, "pet_name")
+    bath = retrieve_data(datafile, author_id, "bath")
+    bath_log = retrieve_data(datafile, author_id, "bath_log")
+    hearts_status = retrieve_data(datafile, author_id, "hearts_status")
+
+    new_bath_count, new_bath_log, flag = bath_interact(bath, bath_log)
+    update_data(datafile, author_id, "bath", new_bath_count)
+    update_data(datafile, author_id, "bath_log", new_bath_log)
 
     # check if reached the max number of pet interacts
-    if value == 0:
-        await ctx.send(f"{user['pet_name']} had already taken a bath!")
+    if flag is False:
+        await ctx.send(f"{pet_name} had already taken a bath!")
         return
 
-    pet_name = user['pet_name']
-    hearts_status = float(user['hearts_status'])
+    hearts_status = float(hearts_status)
 
     if hearts_status < 5:
         hearts_status += 0.4
-    value = add_userinfo(
-        filename=userfile,
-        userid=user['userid'],
-        pet_name=user['pet_name'],
-        date_adopted=user['date_adopted'],
-        hearts_status=hearts_status,
-        update=1
-    )
+        update_data(datafile, author_id, "hearts_status", hearts_status)
     
     await ctx.send(f"{pet_name} feels super clean now~")
 
@@ -379,24 +371,26 @@ async def interacts(ctx):
     """
 
     author_id = ctx.author.id
-    pet = check_userinfo(userfile, author_id)
+    pet = search_data(datafile, author_id)
 
     # error check if there is no pet adopted
     if not pet:
         await ctx.send("You have not adopted a pet yet!")
         return
     
-    user = check_interact(trackerfile, author_id)
+    pet = retrieve_data(datafile, author_id, "pet")
+    feed = retrieve_data(datafile, author_id, "feed")
+    bath = retrieve_data(datafile, author_id, "bath")
 
     embed = discord.Embed(
         title = "୨ৎ Interacts Status ≽^• ˕ • ྀི≼",
         description = (
             "°❀⋆.ೃ࿔\*:･°❀⋆.ೃ࿔\*:･\n\n"
-            f"𖦹 ⭑ Pet: **{user["pet"]}**/3\n"
+            f"𖦹 ⭑ Pet: **{pet}**/3\n"
             "-# *for every 24 hours*\n\n"
-            f"𖦹 ⭑ Feed: **{user["fed"]}**/3\n"
+            f"𖦹 ⭑ Feed: **{feed}**/1\n"
             "-# *for every 12 hours*\n\n"
-            f"𖦹 ⭑ Bath: **{user["bath"]}**/1\n"
+            f"𖦹 ⭑ Bath: **{bath}**/1\n"
             "-# *for every 24 hours*\n\n"
             "°❀⋆.ೃ࿔\*:･°❀⋆.ೃ࿔\*:･"
         ),
