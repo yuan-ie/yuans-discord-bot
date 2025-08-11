@@ -53,15 +53,15 @@ def update_database(datafile):
     connect = sqlite3.connect(datafile)
     c = connect.cursor()
 
-    # c.execute("ALTER TABLE userinfo ADD COLUMN rarity TEXT;")
-    # c.execute("ALTER TABLE userinfo ADD COLUMN description TEXT;")
-    # c.execute("ALTER TABLE userinfo ADD COLUMN evolved TEXT;")
+    c.execute("ALTER TABLE userinfo ADD COLUMN rarity TEXT;")
+    c.execute("ALTER TABLE userinfo ADD COLUMN description TEXT;")
+    c.execute("ALTER TABLE userinfo ADD COLUMN evolved TEXT;")
 
     connect.commit()
     connect.close()
     
 
-def add_data(filename, userid, pet_name, date_adopted, hearts_status, pet, pet_log, feed, feed_log, bath, bath_log):
+def add_data(filename, userid, pet_name, date_adopted, hearts_status, pet, pet_log, feed, feed_log, bath, bath_log, level, gender, species, rarity, description, evolved):
     """
     Function to add user information in the database.
     """
@@ -159,6 +159,6 @@ def age_data(date_adopted):
     """
 
     now = datetime.now()
-    date_adopted_dt = datetime.strptime(date_adopted, "%Y-%m-%d %H:%M:%S")
+    date_adopted_dt = datetime.strptime(date_adopted, "%B %d, %Y")
     age = now - date_adopted_dt
     return age.days

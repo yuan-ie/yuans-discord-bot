@@ -82,3 +82,31 @@ def bath_interact(bath, bath_log):
         flag = True
     
     return bath_count, bath_log, flag
+
+def refresh_interacts(pet_log, feed_log, bath_log):
+    """
+    Refresh the interacts for the Info Status
+    """
+
+    pet = False
+    feed = False
+    bath = False
+
+    # reset bath interacts if it passes 24 hours since the first interact
+    now = datetime.now()
+    pet_log_dt = datetime.strptime(pet_log, "%Y-%m-%d %H:%M:%S.%f")
+    feed_log_dt = datetime.strptime(feed_log, "%Y-%m-%d %H:%M:%S.%f")
+    bath_log_dt = datetime.strptime(bath_log, "%Y-%m-%d %H:%M:%S.%f")
+
+    duration_pet = now - pet_log_dt
+    duration_feed = now - feed_log_dt
+    duration_bath = now - bath_log_dt
+
+    if duration_pet >= timedelta(hours=24):
+        pet = True
+    if duration_feed >= timedelta(hours=12):
+        feed = True
+    if duration_bath >= timedelta(hours=24):
+        bath = True
+
+    return pet, feed, bath

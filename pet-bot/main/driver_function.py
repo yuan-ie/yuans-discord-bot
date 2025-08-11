@@ -4,10 +4,9 @@ from datetime import datetime
 import random
 import os
 import sqlite3
-from tracker_function import pet_interact, feed_interact, bath_interact
+from tracker_function import pet_interact, feed_interact, bath_interact, refresh_interacts
 from database_function import create_database, update_database, add_data, update_data, remove_data, search_data, retrieve_data, age_data
-from level_function import add_exp, display_level, species_pack
-from bios import species as sp
+from level_function import add_exp, display_level, species_pack, species_package
 
 datafolder = "../data"
 datafile = "../data/database.db"
@@ -18,6 +17,7 @@ if not os.path.exists(datafolder):
 
 # create empty database if it does not exist
 create_database(datafile=datafile)
+# update_database(datafile=datafile)
 
 # prefix to run a command for Xiaoling bot.
 bot = commands.Bot(command_prefix="+", intents=discord.Intents.all())
@@ -104,6 +104,9 @@ class adoptMenu(discord.ui.View):
             # get the date and store the date in user information
             date_adopted = datetime.now().strftime("%B %d, %Y")
 
+            # get the randomly generated species and gender
+            specie, description, evolved, rarity, gender = species_package()
+
             # initialize user's pet information (userid, pet name, date adopted, hearts status, and update flag(0 or 1))
             add_data(
                 filename=datafile,
@@ -118,11 +121,11 @@ class adoptMenu(discord.ui.View):
                 bath=0,
                 bath_log="",
                 level=0,
-                species="",
-                gender=""
-                rarity=""
-                description=""
-                evolved="")
+                species=specie,
+                gender=gender,
+                rarity=rarity,
+                description=description,
+                evolved=evolved)
 
             # success message
             self.embed.description = f"Congratulations! You just adopted a new pet on **{date_adopted}** and decided to name it **{self.prev_pet_name.upper()}**!! ꉂ(˵˃ ᗜ ˂˵)!"
@@ -186,18 +189,22 @@ async def info(ctx):
     gender = retrieve_data(datafile, author_id, "gender")
     species = retrieve_data(datafile, author_id, "species")
     level = retrieve_data(datafile, author_id, "level")
+    rarity = retrieve_data(datafile, author_id, "rarity")
+    description = retrieve_data(datafile, author_id, "description")
     
     # display pet info
     embed = discord.Embed(
         title = "⋆. 𐙚 ˚ Pet Info ₍^. .^₎⟆ \✧˚ ⋆｡˚",
         description = (
-            f"Name: **{pet_name}** ₊˚⊹ ᰔ\n"
-            f"Level: {int(level)}\n"
-            f"Age: {age_data(date_adopted)} days old \n"
-            f"Gender: {date_adopted} \n"
-            f"Species: {species} {sp.rarity[species]}\n "
-            f"Date Adopted: {date_adopted} \n"
-            f"Date Adopted: {date_adopted} \n"
+            f"ʚ Name: **{pet_name}** ₊˚⊹ ᰔ\n"
+            f"ʚ Level: {int(level)}\n"
+            f"ʚ Age: {age_data(date_adopted)} days old \n"
+            f"ʚ Gender: {gender} \n"
+            f"ʚ Date Adopted: {date_adopted} \n"
+            "⋆˚꩜｡\n"
+            f"ʚ Species: {species.upper()} {rarity}\n"
+            f"> {description}\n"
+            "☆⋆｡𖦹°‧★ \n"
         ),
         color = 0x94c2ff
     )
@@ -291,12 +298,12 @@ async def pet(ctx):
 
     # check if reached the max number of pet interacts
     if flag is False:
-        await ctx.send(f"{pet_name} doesn't want anymore pets!")
+        await ctx.send(f"{pet_name} doesn't want anymore pets! (˚ ˃̣̣̥⌓˂̣̣̥ )")
         return
     
     # add experience regardless if interact fails/success except when it reaches max
     level = retrieve_data(datafile, author_id, "level")
-    levelup, new_level = add_exp(level, 0.10)
+    levelup, evolved, new_level = add_exp(level, 0.10)
     update_data(datafile, author_id, "level", new_level)
     
     hearts_status = float(hearts_status)
@@ -307,12 +314,18 @@ async def pet(ctx):
         if hearts_status < 5:
             hearts_status += 0.25
             update_data(datafile, author_id, "hearts_status", hearts_status)
-        await ctx.send(f"{pet_name} purrs and rolls around as you're petting.")
+        await ctx.send(f"{pet_name} is happy (\*ᴗ͈ˬᴗ͈)ꕤ\*.ﾟ.")
     else:
         await ctx.send(f"{pet_name} avoids your hand and glares at you...")
 
     if levelup is True:
         await ctx.send(f"{pet_name} has leveled up to level {int(new_level)}! ⸜(｡˃ ᵕ ˂ )⸝♡")
+
+    if evolved is True:
+        await ctx.send(f"...")
+        await ctx.send(f"The ground is shaking...")
+        await ctx.send(f"{pet_name} is glowing..")
+        await ctx.send(f"Congratulations!! {pet_name} has evolved from {retrieve_data(datafile, author_id, "species").upper()} to {retrieve_data(datafile, author_id, "evolved").upper()}! ⸜(｡˃ ᵕ ˂ )⸝♡")
 
 @bot.command()
 async def feed(ctx):
@@ -339,12 +352,12 @@ async def feed(ctx):
 
     # check if reached the max number of pet interacts
     if flag is False:
-        await ctx.send(f"{pet_name} can't eat another bite..")
+        await ctx.send(f"{pet_name} can't eat another bite.. (╥_╥)")
         return
     
     # add experience regardless if interact fails/success except when it reaches max
     level = retrieve_data(datafile, author_id, "level")
-    levelup, new_level = add_exp(level, 0.30)
+    levelup, evolved, new_level = add_exp(level, 0.30)
     update_data(datafile, author_id, "level", new_level)
 
     hearts_status = float(hearts_status)
@@ -361,6 +374,12 @@ async def feed(ctx):
 
     if levelup is True:
         await ctx.send(f"{pet_name} has leveled up to level {int(new_level)}! ⸜(｡˃ ᵕ ˂ )⸝♡")
+
+    if evolved is True:
+        await ctx.send(f"...")
+        await ctx.send(f"The ground is shaking...")
+        await ctx.send(f"{pet_name} is glowing..")
+        await ctx.send(f"Congratulations!! {pet_name} has evolved from {retrieve_data(datafile, author_id, "species").upper()} to {retrieve_data(datafile, author_id, "evolved").upper()}! ⸜(｡˃ ᵕ ˂ )⸝♡")
 
 @bot.command()
 async def bath(ctx):
@@ -392,7 +411,7 @@ async def bath(ctx):
     
     # add experience regardless if interact fails/success except when it reaches max
     level = retrieve_data(datafile, author_id, "level")
-    levelup, new_level = add_exp(level, 0.30)
+    levelup, evolved, new_level = add_exp(level, 0.30)
     update_data(datafile, author_id, "level", new_level)
 
     hearts_status = float(hearts_status)
@@ -405,6 +424,11 @@ async def bath(ctx):
 
     if levelup is True:
         await ctx.send(f"{pet_name} has leveled up to level {int(new_level)}! ⸜(｡˃ ᵕ ˂ )⸝♡")
+    if evolved is True:
+        await ctx.send(f"...")
+        await ctx.send(f"The ground is shaking...")
+        await ctx.send(f"{pet_name} is glowing..")
+        await ctx.send(f"Congratulations!! {pet_name} has evolved from {retrieve_data(datafile, author_id, "species").upper()} to {retrieve_data(datafile, author_id, "evolved").upper()}! ⸜(｡˃ ᵕ ˂ )⸝♡")
 
 @bot.command()
 async def interacts(ctx):
@@ -419,6 +443,22 @@ async def interacts(ctx):
     if not pet:
         await ctx.send("You have not adopted a pet yet!")
         return
+    
+    pet_log = retrieve_data(datafile, author_id, "pet_log")
+    feed_log = retrieve_data(datafile, author_id, "feed_log")
+    bath_log = retrieve_data(datafile, author_id, "bath_log")
+    
+    rpet, rfeed, rbath = refresh_interacts(pet_log, feed_log, bath_log)
+
+    if rpet:
+        update_data(datafile, author_id, "pet", 0)
+    
+    if rfeed:
+        update_data(datafile, author_id, "feed", 0)
+
+    if rbath:
+        update_data(datafile, author_id, "bath", 0)
+        
     
     pet = retrieve_data(datafile, author_id, "pet")
     feed = retrieve_data(datafile, author_id, "feed")
@@ -453,11 +493,14 @@ async def pethelp(ctx):
             "✦ `+adopt` : adopt a pet and name it!\n"
             "✦ `+info` : display your pet's info!\n"
             "✦ `+hearts` : display your pet's heart status!\n"
+            "✦ `+level` : display your pet's level status!\n"
             "✦ `+interacts` : displays the number of pet interacts!\n"
             "✦ `+pet` : pet your pet! max 3 pets per 24 hours.\n"
             "✦ `+feed` : feed your pet! max 1 feed per 12 hours\n"
             "✦ `+bath` : bathe your pet! max 1 bath per 24 hours\n"
-            "✦ `+abandon` : abandon your pet if you're heartless and soulless.. :(\n"
+            "✦ `+abandon` : abandon your pet if you're heartless and soulless.. :(\n\n"
+
+            "✦ `+petpack` : only for users who adopted a pet without the species and level attributes!! :(\n"
         ),
         color = 0x94c2ff
     )
@@ -510,17 +553,25 @@ async def petpack(ctx):
     species = retrieve_data(datafile, author_id, "species")
     level = retrieve_data(datafile, author_id, "level")
     gender = retrieve_data(datafile, author_id, "gender")
+    rarity = retrieve_data(datafile, author_id, "rarity")
+    description = retrieve_data(datafile, author_id, "description")
+    evolved = retrieve_data(datafile, author_id, "evolved")
 
-    if species is None and level is None and gender is None:
-        species, level, gender = species_pack()
+    if species is None or level is None or gender is None or rarity is None or description is None or evolved is None:
+    # if species:
+        species, description, evolved, rarity, gender = species_package()
         update_data(datafile, author_id, "species", species)
-        update_data(datafile, author_id, "level", level)
+        update_data(datafile, author_id, "level", 0)
+        update_data(datafile, author_id, "description", description)
+        update_data(datafile, author_id, "evolved", evolved)
+        update_data(datafile, author_id, "rarity", rarity)
         update_data(datafile, author_id, "gender", gender)
-        
-        await ctx.send(f"Petpack given! <{species}, level {level}, {gender}>")
+        level = retrieve_data(datafile, author_id, "level")
+
+        await ctx.send(f"Petpack given! <{species.upper()}, level {int(level)}, {gender}>")
 
     else:
-        await ctx.send(f"You already have the petpack! <{species}, level {level}, {gender}>")
+        await ctx.send(f"You already have the petpack! <{species.upper()}, {gender}>")
 
 @bot.command()
 async def admin(ctx):
@@ -536,9 +587,12 @@ async def admin(ctx):
         await ctx.send("You have not adopted a pet yet!")
         return
     
-    level = update_data(datafile, author_id, "level", 4.5)
-    update_data(datafile, author_id, "level", level)        
-    await ctx.send(f"level changed to {level}")
+    update_data(datafile, author_id, "pet", 0)
+    update_data(datafile, author_id, "feed", 0)
+    update_data(datafile, author_id, "bath", 0)
+    update_data(datafile, author_id, "level", 9.80)
+    level = retrieve_data(datafile, author_id, "level")        
+    await ctx.send(f"level changed to {level} and reset interacts.")
 
 # RUN THE BOT
 bot.run(keys['BOT_TOKEN'])
