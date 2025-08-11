@@ -30,7 +30,11 @@ with open('../keys.txt', 'r') as file:
     for line in file:
         if '=' in line:
             key, value = line.strip().split('=',1)
-            if value.isdigit():
+
+            if value.startswith('[') and value.endswith(']'):
+                items = value[1:-1].split(',')
+                keys[key] = [int(item.strip()) for item in items]
+            elif value.isdigit():
                 keys[key] = int(value)
             else:
                 keys[key] = value
@@ -194,13 +198,14 @@ async def info(ctx):
     
     # display pet info
     embed = discord.Embed(
-        title = "⋆. 𐙚 ˚ Pet Info ₍^. .^₎⟆ \✧˚ ⋆｡˚",
+        title = f"⋆. 𐙚 ˚ {ctx.author.display_name}'s Pet Info ₍^. .^₎⟆ \✧˚ ⋆｡˚",
         description = (
             f"ʚ Name: **{pet_name}** ₊˚⊹ ᰔ\n"
             f"ʚ Level: {int(level)}\n"
             f"ʚ Age: {age_data(date_adopted)} days old \n"
             f"ʚ Gender: {gender} \n"
             f"ʚ Date Adopted: {date_adopted} \n"
+            f"ʚ Owner: {ctx.author} \n"
             "⋆˚꩜｡\n"
             f"ʚ Species: {species.upper()} {rarity}\n"
             f"> {description}\n"
@@ -580,6 +585,10 @@ async def admin(ctx):
     """
 
     author_id = ctx.author.id
+    if author_id != keys['ADMIN_ID'][0]:
+        await ctx.send("You do not have admin privileges!")
+        return
+
     pet = search_data(datafile, author_id)
 
     # error check if there is no pet adopted
@@ -594,5 +603,114 @@ async def admin(ctx):
     level = retrieve_data(datafile, author_id, "level")        
     await ctx.send(f"level changed to {level} and reset interacts.")
 
+@bot.command()
+async def checkuser(ctx, user: discord.User):
+    """
+    Admin check user's info.
+    """
+
+    author_id = ctx.author.id
+    if author_id not in keys['ADMIN_ID']:
+        await ctx.send("You do not have admin privileges!")
+        return
+    pet = search_data(datafile, user.id)
+
+    # error check if there is no pet adopted
+    if not pet:
+        await ctx.send(f"{user.display_name} has not adopted a pet yet!")
+        return
+    
+    pet_name = retrieve_data(datafile, user.id, "pet_name")
+    date_adopted = retrieve_data(datafile, user.id, "date_adopted")
+    gender = retrieve_data(datafile, user.id, "gender")
+    species = retrieve_data(datafile, user.id, "species")
+    level = retrieve_data(datafile, user.id, "level")
+    rarity = retrieve_data(datafile, user.id, "rarity")
+    description = retrieve_data(datafile, user.id, "description")
+
+    if species is None and gender is None:
+        embed = discord.Embed(
+            title = f"⋆. 𐙚 ˚ {user.display_name}'s Pet Info ₍^. .^₎⟆ \✧˚ ⋆｡˚",
+            description = (
+                f"ʚ Name: **{pet_name}** ₊˚⊹ ᰔ\n"
+                f"ʚ Age: {age_data(date_adopted)} days old \n"
+                f"ʚ Gender: {gender} \n"
+                f"ʚ Date Adopted: {date_adopted} \n"
+                f"ʚ Owner: {user} \n"
+                "⋆˚꩜｡\n"
+                f"> {user} does not have the petpack.\n"
+                f"> Use `+petpack` to retrieve species, gender, and level.\n"
+                "☆⋆｡𖦹°‧★ \n"
+            ),
+            color = 0x94c2ff
+        )
+        
+    else:
+    # display pet info
+        embed = discord.Embed(
+            title = f"⋆. 𐙚 ˚ {user.display_name}'s Pet Info ₍^. .^₎⟆ \✧˚ ⋆｡˚",
+            description = (
+                f"ʚ Name: **{pet_name}** ₊˚⊹ ᰔ\n"
+                f"ʚ Level: {int(level)}\n"
+                f"ʚ Age: {age_data(date_adopted)} days old \n"
+                f"ʚ Gender: {gender} \n"
+                f"ʚ Date Adopted: {date_adopted} \n"
+                f"ʚ Owner: {user} \n"
+                "⋆˚꩜｡\n"
+                f"ʚ Species: {species.upper()} {rarity}\n"
+                f"> {description}\n"
+                "☆⋆｡𖦹°‧★ \n"
+            ),
+            color = 0x94c2ff
+        )
+    await ctx.send(embed=embed)
+
+@bot.command()
+async def removeuser(ctx, user: discord.User):
+    """
+    Admin remove user's info.
+    """
+
+    author_id = ctx.author.id
+    if author_id not in keys['ADMIN_ID']:
+        await ctx.send("You do not have admin privileges!")
+        return
+    pet = search_data(datafile, user.id)
+
+    # error check if there is no pet adopted
+    if not pet:
+        await ctx.send(f"{user.display_name} has not adopted a pet yet!")
+        return
+    
+    remove_data(datafile, user.id)
+    await ctx.send("User info deleted.")
+
+
+@bot.command()
+async def adminpriv(ctx):
+    """
+    Admin remove user's info.
+    """
+
+    author_id = ctx.author.id
+    if author_id != keys['ADMIN_ID'][0]:
+        await ctx.send("You do not have admin privileges!")
+        return
+    
+    userlist = ""
+    
+    for user in keys['ADMIN_ID']:
+        userlist += f"<@{str(user)}>\n"
+
+    # display admins list
+        embed = discord.Embed(
+            title = f"⋆. 𐙚 ˚ Admin List\✧˚ ⋆｡˚",
+            description = (
+                f"Admins:\n{userlist}\n"
+            ),
+            color = 0x94c2ff
+        )
+    await ctx.send(embed=embed)
+    
 # RUN THE BOT
 bot.run(keys['BOT_TOKEN'])
