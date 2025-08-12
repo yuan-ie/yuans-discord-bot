@@ -6,7 +6,7 @@ import os
 import sqlite3
 from tracker_function import pet_interact, feed_interact, bath_interact, refresh_interacts
 from database_function import create_database, update_database, add_data, update_data, remove_data, search_data, retrieve_data, age_data
-from level_function import add_exp, display_level, species_pack, species_package, multiplier_function
+from level_function import add_exp, display_level, set_species_package, species_package, multiplier_function
 
 datafolder = "../data"
 datafile = "../data/database.db"
@@ -227,6 +227,10 @@ async def abandon(ctx):
     # error check if there is no pet adopted
     if not pet:
         await ctx.send("You have not adopted a pet yet!")
+        return
+    
+    if author_id in keys['BLOCK_ID']:
+        await ctx.send(f"{ctx.author} not allowed to abandon your pet!")
         return
     
     # delete the user's pet information
@@ -587,6 +591,36 @@ async def petpack(ctx):
 
     else:
         await ctx.send(f"You already have the petpack! <{species.upper()}, {gender}>")
+
+@bot.command()
+async def setpack(ctx, user: discord.User, specie_type, specie, gender):
+    """
+    Admin check user's info.
+    """
+
+    author_id = ctx.author.id
+    if author_id not in keys['ADMIN_ID']:
+        await ctx.send("You do not have admin privileges!")
+        return
+    pet = search_data(datafile, user.id)
+
+    if not pet:
+        await ctx.send(f"{user.display_name} has not adopted a pet yet!")
+        return
+
+    description, evolved, rarity = set_species_package(specie_type, specie)
+
+    if description is not None:
+        update_data(datafile, author_id, "species", specie)
+        update_data(datafile, author_id, "description", description)
+        update_data(datafile, author_id, "gender", gender)
+        update_data(datafile, author_id, "evolved", evolved)
+        update_data(datafile, author_id, "rarity", rarity)
+        await ctx.send(f"Successfully set petpack! <{specie.upper()}, {gender}>")
+    else:
+        await ctx.send(f"{specie.upper()} does not exist in {specie_type.upper()}")
+
+    
 
 @bot.command()
 async def admin(ctx, level: float, hearts: float):

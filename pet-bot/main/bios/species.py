@@ -7,7 +7,7 @@ species = {
 
     "special_species" : {
         "frog": "Frogs hop around all day in search of a mana stone that turns it into a wizard. Will this frog be able to achieve what most frogs cannot?",
-        "gecko": "This gecko is abnormally miniature, much more so than a regular gecko. It unrealistically dreams to become a gigantic gecko like no other.",
+        "gecko": "This gecko is abnormally miniature, much more so than a regular gecko. It unrealistically dreams to become bigger and badder like no other.",
         "rat": "Unlike its popular brother, this rat does not have the talent to cook. It likes to do parkour instead...",
         "bear": "Bears are destined to become circus bears. But this little bear has dreams to become the impossible. What could it be?",
         "fly": "All flies do is just fly. Maybe that is why they are called 'fly'. This fly wants to prove more than its name implies."

@@ -71,6 +71,16 @@ def species_package():
 
     return specie, description, evolved, rarity, gender
 
+def set_species_package(specie_type:str, specie:str):
+    key_type = f"{specie_type}_species"
+    key = f"{specie}"
+    if key_type in sp.species and key in sp.species[key_type]:
+        description = sp.species[f"{specie_type}_species"][f"{specie}"]
+        evolved = sp.species[f"evolved_species"][f"{specie}"][0]
+        rarity = sp.rarity[f"{specie}"]
+        return description, evolved, rarity
+    return None, None, None
+
 def species_pack():
     "initialize random species, level, and gender"
 
