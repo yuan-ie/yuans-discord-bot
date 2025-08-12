@@ -5,7 +5,7 @@ def add_exp(level, exp):
 
     evolved = False
     # check if already evolved
-    if level > 10:
+    if level >= 10:
         evolved = True
 
     levelup = False 
@@ -79,3 +79,15 @@ def species_pack():
     gender = "male"
 
     return species, level, gender
+
+def multiplier_function (factor):
+    """
+    Random equation determined to change difficultly of leveling up
+    """
+
+    a = 1 / (2**factor) # 1/2n
+    b = 3 / (4 * 2**(factor)) # 3/(4*2n)
+    c = 2**(0.9*factor) # 2^0.9n
+    result = (a + b) * c
+
+    return result

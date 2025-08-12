@@ -6,7 +6,7 @@ import os
 import sqlite3
 from tracker_function import pet_interact, feed_interact, bath_interact, refresh_interacts
 from database_function import create_database, update_database, add_data, update_data, remove_data, search_data, retrieve_data, age_data
-from level_function import add_exp, display_level, species_pack, species_package
+from level_function import add_exp, display_level, species_pack, species_package, multiplier_function
 
 datafolder = "../data"
 datafile = "../data/database.db"
@@ -308,8 +308,9 @@ async def pet(ctx):
     
     # add experience regardless if interact fails/success except when it reaches max
     level = retrieve_data(datafile, author_id, "level")
-    levelup, evolved, new_level = add_exp(level, 0.10)
-    update_data(datafile, author_id, "level", new_level)
+    m = int(level)
+    multiplier = multiplier_function(m)
+    levelup, evolved, new_level = add_exp(level, 0.05*multiplier)
     
     hearts_status = float(hearts_status)
 
@@ -319,10 +320,15 @@ async def pet(ctx):
         if hearts_status < 5:
             hearts_status += 0.25
             update_data(datafile, author_id, "hearts_status", hearts_status)
-        await ctx.send(f"{pet_name} is happy (\*ᴗ͈ˬᴗ͈)ꕤ\*.ﾟ.")
+        levelup2, evolved, new_level = add_exp(new_level, 0.05*multiplier)
+        if levelup is False and levelup2 is True:
+            levelup = True
+        await ctx.send(f"{pet_name} is happy (\*ᴗ͈ˬᴗ͈)ꕤ\*.ﾟ.  +2x")
+        update_data(datafile, author_id, "level", new_level)
     else:
         await ctx.send(f"{pet_name} avoids your hand and glares at you...")
-
+        update_data(datafile, author_id, "level", new_level)
+    
     if levelup is True:
         await ctx.send(f"{pet_name} has leveled up to level {int(new_level)}! ⸜(｡˃ ᵕ ˂ )⸝♡")
 
@@ -362,7 +368,9 @@ async def feed(ctx):
     
     # add experience regardless if interact fails/success except when it reaches max
     level = retrieve_data(datafile, author_id, "level")
-    levelup, evolved, new_level = add_exp(level, 0.30)
+    m = int(level)
+    multiplier = multiplier_function(m)
+    levelup, evolved, new_level = add_exp(level, 0.15*multiplier)
     update_data(datafile, author_id, "level", new_level)
 
     hearts_status = float(hearts_status)
@@ -416,7 +424,9 @@ async def bath(ctx):
     
     # add experience regardless if interact fails/success except when it reaches max
     level = retrieve_data(datafile, author_id, "level")
-    levelup, evolved, new_level = add_exp(level, 0.30)
+    m = int(level)
+    multiplier = multiplier_function(m)
+    levelup, evolved, new_level = add_exp(level, 0.15*multiplier)
     update_data(datafile, author_id, "level", new_level)
 
     hearts_status = float(hearts_status)
@@ -534,7 +544,7 @@ async def level(ctx):
         title = "╰┈➤ Level Status ₍ᐢ. .ᐢ₎ ♬⋆.˚",
         description = (
             f"Level: {whole}\n"
-            f"Exp: {int(fraction*100)}/100\n"            
+            f"Exp: {int(fraction*100*(2**whole))}/{100*(2**whole)}\n"            
         ),
         color = 0x94c2ff
     )
@@ -579,9 +589,9 @@ async def petpack(ctx):
         await ctx.send(f"You already have the petpack! <{species.upper()}, {gender}>")
 
 @bot.command()
-async def admin(ctx):
+async def admin(ctx, level: float, hearts: float):
     """
-    Admin adjust something.
+    Admin adjust something level and reset interacts.
     """
 
     author_id = ctx.author.id
@@ -599,7 +609,8 @@ async def admin(ctx):
     update_data(datafile, author_id, "pet", 0)
     update_data(datafile, author_id, "feed", 0)
     update_data(datafile, author_id, "bath", 0)
-    update_data(datafile, author_id, "level", 9.80)
+    update_data(datafile, author_id, "level", level)
+    update_data(datafile, author_id, "hearts_status", hearts)
     level = retrieve_data(datafile, author_id, "level")        
     await ctx.send(f"level changed to {level} and reset interacts.")
 
