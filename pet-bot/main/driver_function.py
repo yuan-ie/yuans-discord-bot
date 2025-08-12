@@ -147,7 +147,29 @@ class adoptMenu(discord.ui.View):
 
 @bot.command()
 async def hello(ctx):
-    await ctx.send("Hello! :)")
+    await ctx.send("Hello! ⸜(｡˃ ᵕ ˂ )⸝♡ ⋆˚꩜｡")
+
+@bot.command()
+async def rifu(ctx):
+    embed = discord.Embed(
+        title = ".☘︎ ݁˖ About RIFU Bot 𐔌՞. .՞𐦯",
+        description = (
+            "Hi! My name is **RIFU**!\n"
+            f"I am a bot created by <@285893257794289664> ~\n\n"
+
+            "ᯓ★ With my help, you are able to adopt your very own virtual pet! ◝(ᵔᗜᵔ)◜\n"
+            "❀˖° To get started, check the help guide by typing:\n"
+            "> `+pethelp`\n"
+            "ᓚ₍⑅^..^₎♡ All RIFU commands start with '+'\n"
+            "ᯓ★ Note that the bot is still under development so it won't always be on for now.\n\n"
+
+            "Have fun! ᝰ.ᐟ ( •̯́ ₃ •̯̀)\n"
+            "⋆｡𖦹°⭒˚｡⋆"
+        ),
+        color = 0x94c2ff
+    )
+    
+    await ctx.send(embed=embed)
 
 @bot.command()
 async def adopt(ctx):
@@ -230,7 +252,7 @@ async def abandon(ctx):
         return
     
     if author_id in keys['BLOCK_ID']:
-        await ctx.send(f"{ctx.author} not allowed to abandon your pet!")
+        await ctx.send(f"{ctx.author} not allowed to abandon their pet!")
         return
     
     # delete the user's pet information
@@ -467,17 +489,22 @@ async def interacts(ctx):
     feed_log = retrieve_data(datafile, author_id, "feed_log")
     bath_log = retrieve_data(datafile, author_id, "bath_log")
     
-    rpet, rfeed, rbath = refresh_interacts(pet_log, feed_log, bath_log)
+    if pet_log and feed_log and bath_log:
+        rpet, rfeed, rbath = refresh_interacts(pet_log, feed_log, bath_log)
 
-    if rpet:
-        update_data(datafile, author_id, "pet", 0)
-    
-    if rfeed:
-        update_data(datafile, author_id, "feed", 0)
-
-    if rbath:
-        update_data(datafile, author_id, "bath", 0)
+        if rpet:
+            update_data(datafile, author_id, "pet", 0)
         
+        if rfeed:
+            update_data(datafile, author_id, "feed", 0)
+
+        if rbath:
+            update_data(datafile, author_id, "bath", 0)
+    
+    else:
+        update_data(datafile, author_id, "pet", 0)
+        update_data(datafile, author_id, "feed", 0)
+        update_data(datafile, author_id, "bath", 0)
     
     pet = retrieve_data(datafile, author_id, "pet")
     feed = retrieve_data(datafile, author_id, "feed")
@@ -545,7 +572,7 @@ async def level(ctx):
     whole, fraction = display_level(level)
     
     embed = discord.Embed(
-        title = "╰┈➤ Level Status ₍ᐢ. .ᐢ₎ ♬⋆.˚",
+        title = "⋆˚꩜｡ Level Status °❀⋆.ೃ࿔\*:･",
         description = (
             f"Level: {whole}\n"
             f"Exp: {int(fraction*100*(2**whole))}/{100*(2**whole)}\n"            
@@ -611,11 +638,11 @@ async def setpack(ctx, user: discord.User, specie_type, specie, gender):
     description, evolved, rarity = set_species_package(specie_type, specie)
 
     if description is not None:
-        update_data(datafile, author_id, "species", specie)
-        update_data(datafile, author_id, "description", description)
-        update_data(datafile, author_id, "gender", gender)
-        update_data(datafile, author_id, "evolved", evolved)
-        update_data(datafile, author_id, "rarity", rarity)
+        update_data(datafile, user.id, "species", specie)
+        update_data(datafile, user.id, "description", description)
+        update_data(datafile, user.id, "gender", gender)
+        update_data(datafile, user.id, "evolved", evolved)
+        update_data(datafile, user.id, "rarity", rarity)
         await ctx.send(f"Successfully set petpack! <{specie.upper()}, {gender}>")
     else:
         await ctx.send(f"{specie.upper()} does not exist in {specie_type.upper()}")
