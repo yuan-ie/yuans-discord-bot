@@ -27,7 +27,7 @@ species = {
         "cat": ["Cat with a Cape", ""],
         "pigeon": ["Pigeon with a Hat", ""],
         "frog": ["Mystical Frog", "This frog has managed to become a wizard after finding a mana stone."],
-        "gecko": ["Gigantic Gecko", "This gecko is 500ft tall. Enough said."],
+        "gecko": ["Grandiose Gecko", "This gecko is 500ft tall. Enough said."],
         "rat": ["Ninja Rat", "This rat acts like a ninja but is also a very *real* ninja."],
         "bear": ["Warrior Bear", "This bear decided to become a warrior to protect the planet instead of being a circus entertainment."],
         "fly": ["The Walking Fly", "This fly is determined to walk everywhere."],

@@ -47,13 +47,13 @@ def species_package():
     "initialize random species, level, and gender"
 
     species_type_list = ["common", "special", "rare", "extraordinary"]
-    type_rng = random.randint(1,10)
+    type_rng = random.randint(1,100)
 
     match type_rng:
-        case x if x <= 4: species_type = species_type_list[0] # common
-        case x if x <= 7: species_type = species_type_list[1] # special
-        case x if x <= 9: species_type = species_type_list[2] # rare
-        case x if x <= 10: species_type = species_type_list[3] # extraordinary
+        case x if x <= 50: species_type = species_type_list[0] # common
+        case x if x <= 80: species_type = species_type_list[1] # special
+        case x if x <= 95: species_type = species_type_list[2] # rare
+        case x if x <= 100: species_type = species_type_list[3] # extraordinary
 
     # ex. common_species
     species = sp.species[f"{species_type}_species"]

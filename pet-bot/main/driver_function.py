@@ -145,6 +145,12 @@ class adoptMenu(discord.ui.View):
 #                    USER FUNCTIONS
 # ------------------------------------------------------------
 
+@bot.event
+async def on_ready():
+    print(f'Logged on as {bot.user}!')
+    channel = bot.get_channel(keys['CHANNEL_ID'])
+    await channel.send("RIFU ONLINE! ⸜(｡˃ ᵕ ˂ )⸝♡")
+
 @bot.command()
 async def hello(ctx):
     await ctx.send("Hello! ⸜(｡˃ ᵕ ˂ )⸝♡ ⋆˚꩜｡")
