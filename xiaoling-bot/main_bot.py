@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import data.id_files as idfiles
+import io
 
 # prefix to run a command for Xiaoling bot.
 bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
@@ -20,6 +21,9 @@ with open('keys.txt', 'r') as file:
 
 # ------------- BUTTONS -----------------
 class myModal(discord.ui.Modal):
+    """
+    Modal popup that prompts for title and description depending if it is the main message or secondary message.
+    """
     def __init__(self, title:str, parent_view, message:discord.Message, prev_title="", prev_description=""):
         super().__init__(title=title)
 
@@ -38,6 +42,9 @@ class myModal(discord.ui.Modal):
 
     # submit for each modal (not the submit button)
     async def on_submit(self, interaction: discord.Interaction):
+        """
+        Clicking submit (of the modal) will save the values of this session.
+        """
 
         # the input values from the user
         title = self.input_title.value
@@ -48,15 +55,15 @@ class myModal(discord.ui.Modal):
             
             self.parent_view.embed.title = title
             self.parent_view.embed.description = description
-            self.parent_view.prev_main_title = title
-            self.parent_view.prev_main_description = description
+            self.parent_view.stored_main_title = title
+            self.parent_view.stored_main_description = description
             await self.message.edit(embed=self.parent_view.embed)
 
         # edit the secondary message
         elif self.title == "Secondary Message":
             # save the inputs and store and previous inputs
-            self.parent_view.prev_secondary_title = title
-            self.parent_view.prev_secondary_description = description
+            self.parent_view.stored_secondary_title = title
+            self.parent_view.stored_secondary_description = description
 
             # remove the second field if no input
             if not title and not description:
@@ -71,23 +78,54 @@ class myModal(discord.ui.Modal):
                     self.parent_view.embed.add_field(name=title, value=description)
                 await self.message.edit(embed=self.parent_view.embed)
 
-        # submit to the target channel
-        elif self.title == "Submit Message":
-            await self.parent_view.target_channel.send(embed=self.parent_view.embed)
-            await interaction.response.send_message("Embed sent to specified channel! :D", ephemeral=False)
+        # # submit to the target channel
+        # elif self.title == "Submit Message":
+        #     await self.parent_view.target_channel.send(embed=self.parent_view.embed)
+        #     await interaction.response.send_message("Embed sent to specified channel! :D", ephemeral=False)
 
         await interaction.response.send_message("Embed is updated! :D", ephemeral=True)
+
+class stickerModal(discord.ui.Modal):
+    """
+    Modal popup that prompts for sticker id.
+    """
+    def __init__(self, title:str, parent_view, message:discord.Message, stored_ids=""):
+        super().__init__(title=title)
+
+        self.parent_view = parent_view
+        self.message = message
+
+        # input title and description prompts
+        self.input_stickers = discord.ui.TextInput(label="Sticker IDs", style=discord.TextStyle.short, default=stored_ids, required=False)
+        self.add_item(self.input_stickers)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        stickers = self.input_stickers.value
+        self.parent_view.stored_stickers = stickers
+
+        if not stickers:
+            for field in range(len(self.parent_view.embed.fields)):
+                self.parent_view.embed.remove_field(0)
+                
+        # else, edit the second field
+        else:
+            if len(self.parent_view.embed.fields) == 1:
+                self.parent_view.embed.set_field_at(0, name=title, value=description, inline=False)
+            else:
+                self.parent_view.embed.add_field(name=title, value=description)
+            await self.message.edit(embed=self.parent_view.embed)
 
 class myMenu(discord.ui.View):
     def __init__(self, embed, channel):
         super().__init__()
         self.embed = embed
         self.channel = channel
-        self.value = None
-        self.prev_main_title = ""
-        self.prev_main_description = ""
-        self.prev_secondary_title = ""
-        self.prev_secondary_description = ""
+        self.stored_main_title = ""
+        self.stored_main_description = ""
+        self.stored_secondary_title = ""
+        self.stored_secondary_description = ""
+        self.stored_image = None
+        self.stored_stickers = ""
 
     # button to enter main message
     @discord.ui.button(label="Main Message", style=discord.ButtonStyle.grey)
@@ -96,8 +134,8 @@ class myMenu(discord.ui.View):
             title="Main Message",
             parent_view=self,
             message=interaction.message,
-            prev_title=self.prev_main_title,
-            prev_description=self.prev_main_description
+            prev_title=self.stored_main_title,
+            prev_description=self.stored_main_description
             )
         await interaction.response.send_modal(modal)
 
@@ -108,18 +146,57 @@ class myMenu(discord.ui.View):
             title="Secondary Message",
             parent_view=self,
             message=interaction.message,
-            prev_title=self.prev_secondary_title,
-            prev_description=self.prev_secondary_description
+            prev_title=self.stored_secondary_title,
+            prev_description=self.stored_secondary_description
             )
         await interaction.response.send_modal(modal)
+
+    @discord.ui.button(label="Stickers", style=discord.ButtonStyle.grey)
+    async def sticker(self, interaction: discord.Interaction, button: discord.ui.button):
+        """
+        User uploads a sticker (optional).
+        """
+
+
+    @discord.ui.button(label="Upload Image", style=discord.ButtonStyle.grey)
+    async def image(self, interaction: discord.Interaction, button: discord.ui.button):
+        """
+        User uploads an image (optional).
+        """
+
+        await interaction.response.send_message("Please upload an image below.", ephemeral=True)
+
+        def check(msg: discord.Message):
+            return (
+                msg.author == interaction.user
+                and msg.attachments
+                and msg.attachments[0].filename.lower().endswith((".png", ".jpg", ".jpeg", ".gif", ".webp"))
+            )
+        try:
+            msg = await bot.wait_for("message", check=check, timeout=30)
+            attachment = msg.attachments[0]
+            img = await attachment.read()
+            self.stored_image = discord.File(io.BytesIO(img), filename=attachment.filename)
+            await interaction.followup.send("Image saved!", ephemeral=True)
+
+        except TimeoutError:
+            await interaction.followup.send("You didn’t upload an image in time. Try uploading again.", ephemeral=True)
 
     # submit to send the embed to the correct channel
     @discord.ui.button(label="Submit", style=discord.ButtonStyle.red)
     async def submit(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # try:
         target_channel = self.channel
-        await target_channel.send(embed=self.embed)
+        embed = self.embed
+        if self.stored_image:
+            embed.set_image(url=f"attachment://{self.stored_image.filename}")
+            await target_channel.send(embed=embed, file=self.stored_image)
+        else:
+            await target_channel.send(embed=embed)
         await interaction.message.edit(view=None)
         await interaction.response.send_message("Embed sent to the specified channel!", ephemeral=False)
+        # except:
+            # await interaction.response.send_message("No description inputted in main message!", ephemeral=True)
 
 # ------------- EVENTS ------------------
 # after starting up, bot says something in specified channel

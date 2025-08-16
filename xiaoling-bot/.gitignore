@@ -3,3 +3,4 @@ git rm --cached keys.txt
 .venv/
 *.txt
 keys.txt
+.csv
