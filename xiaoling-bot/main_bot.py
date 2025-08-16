@@ -96,24 +96,18 @@ class stickerModal(discord.ui.Modal):
         self.message = message
 
         # input title and description prompts
-        self.input_stickers = discord.ui.TextInput(label="Sticker IDs", style=discord.TextStyle.short, default=stored_ids, required=False)
+        self.input_stickers = discord.ui.TextInput(label="Sticker IDs", style=discord.TextStyle.paragraph, default=stored_ids, required=False)
         self.add_item(self.input_stickers)
 
     async def on_submit(self, interaction: discord.Interaction):
         stickers = self.input_stickers.value
         self.parent_view.stored_stickers = stickers
 
-        if not stickers:
-            for field in range(len(self.parent_view.embed.fields)):
-                self.parent_view.embed.remove_field(0)
-                
-        # else, edit the second field
+        # if stickers are inputted or not inputted, display.
+        if stickers != "":
+            await interaction.response.send_message("Added stickers! :D", ephemeral=True)
         else:
-            if len(self.parent_view.embed.fields) == 1:
-                self.parent_view.embed.set_field_at(0, name=title, value=description, inline=False)
-            else:
-                self.parent_view.embed.add_field(name=title, value=description)
-            await self.message.edit(embed=self.parent_view.embed)
+            await interaction.response.send_message("No stickers added!", ephemeral=True)
 
 class myMenu(discord.ui.View):
     def __init__(self, embed, channel):
@@ -130,6 +124,9 @@ class myMenu(discord.ui.View):
     # button to enter main message
     @discord.ui.button(label="Main Message", style=discord.ButtonStyle.grey)
     async def main(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """
+        User inputs main message of the embed.
+        """
         modal = myModal(
             title="Main Message",
             parent_view=self,
@@ -142,6 +139,9 @@ class myMenu(discord.ui.View):
     # button to enter secondary message
     @discord.ui.button(label="Secondary Message", style=discord.ButtonStyle.grey)
     async def secondary(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """
+        User inputs secondary message of the embed.
+        """
         modal = myModal(
             title="Secondary Message",
             parent_view=self,
@@ -156,9 +156,16 @@ class myMenu(discord.ui.View):
         """
         User uploads a sticker (optional).
         """
+        modal = stickerModal(
+            title="Upload Stickers (max 3 limit)",
+            parent_view=self,
+            message=interaction.message,
+            stored_ids=self.stored_stickers
+            )
+        await interaction.response.send_modal(modal)
 
 
-    @discord.ui.button(label="Upload Image", style=discord.ButtonStyle.grey)
+    @discord.ui.button(label="Image", style=discord.ButtonStyle.grey)
     async def image(self, interaction: discord.Interaction, button: discord.ui.button):
         """
         User uploads an image (optional).
@@ -188,15 +195,53 @@ class myMenu(discord.ui.View):
         # try:
         target_channel = self.channel
         embed = self.embed
+        error = False
+
+        if self.stored_main_description == "":
+            error = True
+            await interaction.response.send_message("Main description needed!", ephemeral=True)
+
+        # if image exists, put it in the embed.
         if self.stored_image:
             embed.set_image(url=f"attachment://{self.stored_image.filename}")
             await target_channel.send(embed=embed, file=self.stored_image)
         else:
             await target_channel.send(embed=embed)
-        await interaction.message.edit(view=None)
-        await interaction.response.send_message("Embed sent to the specified channel!", ephemeral=False)
-        # except:
-            # await interaction.response.send_message("No description inputted in main message!", ephemeral=True)
+
+        # upload the stickers if valid
+        # if the stickers are inputted, split it by new line.
+        if self.stored_stickers != "":
+            sticker_ids = []
+            sticker_objs = []
+            invalid_ids = []
+            stickers = self.stored_stickers.splitlines() if self.stored_stickers else []
+
+            for s in stickers:
+                if s.strip() != "":
+                    try:
+                        sticker_ids.append(int(s))
+                    except ValueError:
+                        invalid_ids.append(s)
+                        # error = True
+            
+            for sid in sticker_ids:
+                try:
+                    sticker = await target_channel.guild.fetch_sticker(sid)
+                    sticker_objs.append(sticker)
+                    # error = False
+                except discord.NotFound:
+                    invalid_ids.append(sid)
+                    # error = True
+
+            if sticker_objs:
+                await target_channel.send(stickers=sticker_objs)
+            if invalid_ids:
+                await interaction.response.send_message(f"Disregarding invalid sticker IDs: {', '.join(map(str, invalid_ids))}", ephemeral=True)
+
+        if not error:
+            # close up the session and confirm send if no errors
+            await interaction.message.edit(view=None)
+            await interaction.response.send_message(f"Embed sent to <#{target_channel.id}>", ephemeral=False)
 
 # ------------- EVENTS ------------------
 # after starting up, bot says something in specified channel
